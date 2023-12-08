@@ -1,6 +1,6 @@
 #pragma once
-#ifndef Terrain_H
-#define Terrain_H
+#ifndef Ocean_H
+#define Ocean_H
 
 #include <map>
 #include <string>
@@ -15,12 +15,14 @@
 class MatrixStack;
 class Program;
 
-class Terrain
+class Ocean
 {
 public:
-	Terrain(int width, int height, double resolution, double scale, double heightMul);
-	virtual ~Terrain();
+	Ocean(int width, int height, double resolution, double scale, double heightMul);
+	virtual ~Ocean();
 	void init();
+	void step(double t);
+	float getHeight(double x, double z);
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> p) const;
 	void updatePosNor();
 

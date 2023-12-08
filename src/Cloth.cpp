@@ -331,8 +331,8 @@ void Cloth::init()
 void Cloth::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p) const
 {
 	// Draw mesh
-	glUniform3f(p->getUniform("kdFront"), 0.894f, 0.882f, 0.792f);
-	glUniform3f(p->getUniform("kdBack"),  0.776f, 0.843f, 0.835f);
+	glUniform3f(p->getUniform("kd"), 0.894f, 0.882f, 0.792f);
+	//glUniform3f(p->getUniform("kdBack"),  0.776f, 0.843f, 0.835f);
 	MV->pushMatrix();
 	glUniformMatrix4fv(p->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 	int h_pos = p->getAttribute("aPos");

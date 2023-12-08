@@ -1,4 +1,4 @@
-#include "Terrain.h"
+#include "Ocean.h"
 
 
 #include <iostream>
@@ -18,7 +18,7 @@
 using namespace std;
 using namespace Eigen;
 
-Terrain::Terrain(int width, int height, double resolution, double scale, double heightMul)
+Ocean::Ocean(int width, int height, double resolution, double scale, double heightMul)
 {
 	assert(width > 1);
 	assert(height > 1);
@@ -33,12 +33,12 @@ Terrain::Terrain(int width, int height, double resolution, double scale, double 
 
 	int nVerts = width * height;
 
-	//Generate Terrain using noise generator
+	//Generate Ocean using noise generator
 	siv::PerlinNoise perlin;
 	perlin.reseed(0);
 	for (int row = 0; row < height; ++row) {
 		for (int col = 0; col < width; ++col) {
-			heightMap.push_back(perlin.normalizedOctave2D(row * resolution/scale, col * resolution/scale, 10,0.5));
+			heightMap.push_back(perlin.normalizedOctave3D(row * resolution/scale, col * resolution/scale, 0, 10,0.5));
 		}
 	}
 
@@ -70,11 +70,11 @@ Terrain::Terrain(int width, int height, double resolution, double scale, double 
 	}
 }
 
-Terrain::~Terrain()
+Ocean::~Ocean()
 {
 }
 
-void Terrain::updatePosNor()
+void Ocean::updatePosNor()
 {
 	// Position
 	for (int i = 0; i < height; ++i) {
@@ -165,7 +165,7 @@ void Terrain::updatePosNor()
 
 }
 
-void Terrain::init()
+void Ocean::init()
 {
 	glGenBuffers(1, &posBufID);
 	glBindBuffer(GL_ARRAY_BUFFER, posBufID);
@@ -189,10 +189,45 @@ void Terrain::init()
 	assert(glGetError() == GL_NO_ERROR);
 }
 
-void Terrain::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p) const
+void Ocean::step(double t) {
+	//Generate Ocean using noise generator
+	siv::PerlinNoise perlin;
+	perlin.reseed(0);
+	heightMap.clear();
+	for (int row = 0; row < height; ++row) {
+		for (int col = 0; col < width; ++col) {
+			heightMap.push_back(perlin.normalizedOctave3D(row * resolution / scale, col * resolution / scale, t/10.0, 10, 0.5));
+		}
+	}
+
+	updatePosNor();
+}
+
+//Given x and z in world-space coordinates, return y, which is the height of the ocean at that point
+float Ocean::getHeight(double x, double z) {
+
+	// x = j * resolution - centerOffset[0]
+	// centerOffset[0] + x = j * resolution
+	// j = (centerOffset[0] + x)/resolution
+	// z - i * resolution - centerOffset[2]
+	// i = (centerOffset[2] + z)/resolution
+	double i = (centerOffset[2] + z) / resolution;
+	double j = (centerOffset[0] + x) / resolution;	
+
+	//now that we have the coordinates, maybe just start by taking floor. better solution would be 2d lerp.
+	int row = floor(i);
+	int col = floor(j);
+
+	row = max(0, min(height - 1, row));
+	col = max(0, min(width - 1, col));
+
+	return(heightMap.at(row * width + col));
+}
+
+void Ocean::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p) const
 {
 	// Draw mesh
-	glUniform3f(p->getUniform("kd"), 0.0f, 1.0f, 0.0f);
+	glUniform3f(p->getUniform("kd"), 0.0f, 0.0f, 1.0f);;
 	//glUniform3f(p->getUniform("kdBack"), 0.776f, 0.843f, 0.835f);
 	MV->pushMatrix();
 	glUniformMatrix4fv(p->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));

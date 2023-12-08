@@ -32,6 +32,7 @@ public:
 	void mouseMoved(float x, float y);
 	void applyProjectionMatrix(std::shared_ptr<MatrixStack> P) const;
 	void applyViewMatrix(std::shared_ptr<MatrixStack> MV) const;
+	void setCenter(glm::vec3 center) { this->center = center; };
 	
 private:
 	float aspect;
@@ -40,6 +41,7 @@ private:
 	float zfar;
 	glm::vec2 rotations;
 	glm::vec3 translations;
+	glm::vec3 center;
 	glm::vec2 mousePrev;
 	int state;
 	float rfactor;

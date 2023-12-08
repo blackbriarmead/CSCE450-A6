@@ -109,8 +109,8 @@ ELSE()
 ENDIF()
 
 #load libnoise
-INCLUDE_DIRECTORIES(C:/libnoise/include)
-TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} C:/libnoise/bin/libnoise.lib)
+#INCLUDE_DIRECTORIES(C:/libnoise/include)
+#TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} C:/libnoise/bin/libnoise.lib)
 
 
 # Get the EIGEN environment variable. Since EIGEN is a header-only library, we

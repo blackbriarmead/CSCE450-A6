@@ -23,6 +23,7 @@
 #include "MatrixStack.h"
 #include "Shape.h"
 #include "Scene.h"
+#include "Boat.h"
 //#include <noise/noise.h>
 
 using namespace std;
@@ -30,14 +31,11 @@ using namespace Eigen;
 
 bool keyToggles[256] = {false}; // only for English keyboards!
 
-const int TERRAIN_SIZE = 1024;
-double terrain[TERRAIN_SIZE][TERRAIN_SIZE];//will hold terrain data
-
 GLFWwindow *window; // Main application window
 string RESOURCE_DIR = ""; // Where the resources are loaded from
 
 shared_ptr<Camera> camera;
-shared_ptr<Program> prog;
+//shared_ptr<Program> prog;
 shared_ptr<Program> progSimple;
 shared_ptr<Program> progTerrain;
 shared_ptr<Scene> scene;
@@ -120,33 +118,31 @@ static void init()
 	progTerrain->init();
 	progTerrain->addUniform("P");
 	progTerrain->addUniform("MV");
-	progTerrain->addUniform("kdFront");
-	progTerrain->addUniform("kdBack");
+	progTerrain->addUniform("kd");
+	//progTerrain->addUniform("kdBack");
 	progTerrain->addAttribute("aPos");
 	progTerrain->addAttribute("aNor");
 	progTerrain->addAttribute("aTex");
-	progTerrain->setVerbose(false);
+	progTerrain->setVerbose(true);
 	
-	prog = make_shared<Program>();
-	prog->setVerbose(true); // Set this to true when debugging.
-	prog->setShaderNames(RESOURCE_DIR + "phong_vert.glsl", RESOURCE_DIR + "phong_frag.glsl");
-	prog->init();
-	prog->addUniform("P");
-	prog->addUniform("MV");
-	prog->addUniform("kdFront");
-	prog->addUniform("kdBack");
-	prog->addAttribute("aPos");
-	prog->addAttribute("aNor");
-	prog->addAttribute("aTex");
-	prog->setVerbose(false);
+	//prog = make_shared<Program>();
+	//prog->setVerbose(true); // Set this to true when debugging.
+	//prog->setShaderNames(RESOURCE_DIR + "phong_vert.glsl", RESOURCE_DIR + "phong_frag.glsl");
+	//prog->init();
+	//prog->addUniform("P");
+	//prog->addUniform("MV");
+	//prog->addUniform("kdFront");
+	//prog->addUniform("kdBack");
+	//prog->addAttribute("aPos");
+	//prog->addAttribute("aNor");
+	//prog->addAttribute("aTex");
+	//prog->setVerbose(false);
 	
 	camera = make_shared<Camera>();
 
 	scene = make_shared<Scene>();
 	scene->load(RESOURCE_DIR);
-	scene->tare();
 	scene->init();
-	scene->programs.push_back(progTerrain);
 
 	
 	
@@ -189,55 +185,17 @@ void render()
 	MV->pushMatrix();
 	camera->applyViewMatrix(MV);
 
-	// Draw grid
-	progSimple->bind();
-	glUniformMatrix4fv(progSimple->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	glUniformMatrix4fv(progSimple->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-	glLineWidth(2.0f);
-	float x0 = -0.5f;
-	float x1 = 0.5f;
-	float z0 = -0.5f;
-	float z1 = 0.5f;
-	int gridSize = 10;
-	glLineWidth(1.0f);
-	glBegin(GL_LINES);
-	for(int i = 1; i < gridSize; ++i) {
-		if(i == gridSize/2) {
-			glColor3f(0.1f, 0.1f, 0.1f);
-		} else {
-			glColor3f(0.8f, 0.8f, 0.8f);
-		}
-		float x = x0 + i / (float)gridSize * (x1 - x0);
-		glVertex3f(x, 0.0f, z0);
-		glVertex3f(x, 0.0f, z1);
-	}
-	for(int i = 1; i < gridSize; ++i) {
-		if(i == gridSize/2) {
-			glColor3f(0.1f, 0.1f, 0.1f);
-		} else {
-			glColor3f(0.8f, 0.8f, 0.8f);
-		}
-		float z = z0 + i / (float)gridSize * (z1 - z0);
-		glVertex3f(x0, 0.0f, z);
-		glVertex3f(x1, 0.0f, z);
-	}
-	glEnd();
-	glColor3f(0.4f, 0.4f, 0.4f);
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(x0, 0.0f, z0);
-	glVertex3f(x1, 0.0f, z0);
-	glVertex3f(x1, 0.0f, z1);
-	glVertex3f(x0, 0.0f, z1);
-	glEnd();
-	progSimple->unbind();
-
 	// Draw scene
-	prog->bind();
-	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	progTerrain->bind();
+	GLSL::checkError(GET_FILE_LINE);
+	glUniformMatrix4fv(progTerrain->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	GLSL::checkError(GET_FILE_LINE);
 	MV->pushMatrix();
-	scene->draw(MV, prog);
+	scene->draw(MV, progTerrain, progSimple);
+	GLSL::checkError(GET_FILE_LINE);
 	MV->popMatrix();
-	prog->unbind();
+	progTerrain->unbind();
+	GLSL::checkError(GET_FILE_LINE);
 	
 	//////////////////////////////////////////////////////
 	// Cleanup
@@ -258,6 +216,7 @@ void stepperFunc()
 		auto t0 = std::chrono::system_clock::now();
 		if(keyToggles[(unsigned)' ']) {
 			scene->step();
+			camera->setCenter(glm::vec3(-scene->boat->position[0], -scene->boat->position[1], -scene->boat->position[2]));
 		}
 		auto t1 = std::chrono::system_clock::now();
 		double dt = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();

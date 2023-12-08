@@ -11,7 +11,7 @@ Camera::Camera() :
 	znear(0.1f),
 	zfar(1000.0f),
 	rotations(0.0, 0.0),
-	translations(0.0f, 0.0f, -2.0f),
+	translations(0.0f, 0.0f, -1.0f),
 	rfactor(0.01f),
 	tfactor(0.001f),
 	sfactor(0.005f)
@@ -65,4 +65,5 @@ void Camera::applyViewMatrix(std::shared_ptr<MatrixStack> MV) const
 	MV->translate(translations);
 	MV->rotate(rotations.y, glm::vec3(1.0f, 0.0f, 0.0f));
 	MV->rotate(rotations.x, glm::vec3(0.0f, 1.0f, 0.0f));
+	MV->translate(center);
 }

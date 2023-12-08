@@ -7,6 +7,8 @@
 #include "Shape.h"
 #include "Program.h"
 #include "Terrain.h"
+#include "Ocean.h"
+#include "Boat.h"
 
 using namespace std;
 using namespace Eigen;
@@ -16,21 +18,33 @@ Scene::Scene() :
 	h(1e-2),
 	grav(0.0, 0.0, 0.0)
 {
+	this->t_start = getTime();
+
 }
 
 Scene::~Scene()
 {
 }
 
+double Scene::getTime() {
+	unsigned long milliseconds_since_epoch =
+	std::chrono::system_clock::now().time_since_epoch() /
+	std::chrono::milliseconds(1);
+
+	double seconds = milliseconds_since_epoch / 1000.0;
+	//std::cout << "seconds since epoch: " << seconds << std::endl;
+	return(seconds);
+}
+
 void Scene::load(const string &RESOURCE_DIR)
 {
 	// Units: meters, kilograms, seconds
-	h = 1e-3; //1e-3 default time step normal range 1e-2 to 1e-4
+	h = 1e-1; //1e-3 default time step normal range 1e-2 to 1e-4
 	
 	grav << 0.0, -9.8, 0.0;
 	
-	int rows = 200;
-	int cols = 200;
+	int rows = 100;
+	int cols = 100;
 	double mass = 1.0;
 	double alpha = 0e-1; //0e-1 default
 	double damping = 1e-5; //1e-5 default
@@ -48,8 +62,11 @@ void Scene::load(const string &RESOURCE_DIR)
 	spheres.push_back(sphere);
 	sphere->r = 0.1;
 	sphere->x = Vector3d(0.0, 0.2, 0.0);
-
-	terrain = make_shared<Terrain>(0.03, 512, 512);
+	const int terrain_size = 1024;
+	const int ocean_size = 256;
+	terrain = make_shared<Terrain>(terrain_size, terrain_size,0.05,10.0,5.0);
+	ocean = make_shared<Ocean>(ocean_size, ocean_size, 0.05f, 3.0, 0.2);
+	boat = make_shared<Boat>(RESOURCE_DIR + "ship.obj", Vector3d(0.0,0.0,2.0));
 }
 
 void Scene::init()
@@ -57,28 +74,33 @@ void Scene::init()
 	sphereShape->init();
 	cloth->init();
 	terrain->init();
+	ocean->init();
+	boat->init();
 }
 
 void Scene::tare()
 {
-	for(auto s : spheres) {
+	/*for(auto s : spheres) {
 		s->tare();
 	}
-	cloth->tare();
+	cloth->tare();*/
 }
 
 void Scene::reset()
 {
-	t = 0.0;
+	/*t = 0.0;
 	for(auto s : spheres) {
 		s->reset();
 	}
-	cloth->reset();
+	cloth->reset();*/
 }
 
 void Scene::step()
 {
-	t += h;
+	float prevT = t;
+	t = getTime() - t_start;
+
+	float dt = t - prevT;
 	
 	// Move the sphere
 	if(!spheres.empty()) {
@@ -87,15 +109,23 @@ void Scene::step()
 	}
 	
 	// Simulate the cloth
-	cloth->step(h, grav, spheres);
+	//cloth->step(h, grav, spheres);
+	ocean->step(t);
+	boat->step(dt, ocean);
 }
 
-void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog) const
+void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple) const
 {
-	glUniform3fv(prog->getUniform("kdFront"), 1, Vector3f(1.0, 1.0, 1.0).data());
-	for(auto s : spheres) {
+	//glUniform3fv(prog->getUniform("kdFront"), 1, Vector3f(1.0, 1.0, 1.0).data());
+	//glUniform3fv(programs.at(0)->getUniform("kdFront"), 1, Vector3f(0.0, 1.0, 0.0).data());
+	//glUniform3fv(programs.at(0)->getUniform("kdBack"), 1, Vector3f(0.0, 1.0, 0.0).data());
+	//for(auto s : spheres) {
 		//s->draw(MV, prog);
-	}
+	//}
 	//cloth->draw(MV, prog);
-	terrain->draw(MV, programs.at(0));
+	terrain->draw(MV, prog);
+	ocean->draw(MV, prog);
+	boat->draw(MV, prog, progSimple);
+	
+	GLSL::checkError(GET_FILE_LINE);
 }
