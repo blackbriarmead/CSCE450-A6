@@ -144,7 +144,7 @@ static void init()
 	scene->load(RESOURCE_DIR);
 	scene->init();
 
-	
+	keyToggles[(unsigned)' '] = true;
 	
 	// If there were any OpenGL errors, this will print something.
 	// You can intersperse this line in your code to find the exact location

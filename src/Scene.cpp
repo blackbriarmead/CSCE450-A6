@@ -62,10 +62,10 @@ void Scene::load(const string &RESOURCE_DIR)
 	spheres.push_back(sphere);
 	sphere->r = 0.1;
 	sphere->x = Vector3d(0.0, 0.2, 0.0);
-	const int terrain_size = 1024;
-	const int ocean_size = 256;
+	const int terrain_size = 256;
+	const int ocean_size = 128;
 	terrain = make_shared<Terrain>(terrain_size, terrain_size,0.05,10.0,5.0);
-	ocean = make_shared<Ocean>(ocean_size, ocean_size, 0.05f, 3.0, 0.2);
+	ocean = make_shared<Ocean>(ocean_size, ocean_size, 0.05f, 3.0, 0.5);
 	boat = make_shared<Boat>(RESOURCE_DIR + "ship.obj", Vector3d(0.0,0.0,2.0));
 }
 
@@ -98,7 +98,7 @@ void Scene::reset()
 void Scene::step()
 {
 	float prevT = t;
-	t = getTime() - t_start;
+	t = 1.0*(getTime() - t_start);
 
 	float dt = t - prevT;
 	

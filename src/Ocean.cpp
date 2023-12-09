@@ -87,7 +87,7 @@ void Ocean::updatePosNor()
 		}
 	}
 
-	std::cout << posBuf.size() << std::endl;
+	//std::cout << posBuf.size() << std::endl;
 	/*for (float f : heightMap) {
 		std::cout << f << std::endl;
 	}*/
@@ -196,7 +196,7 @@ void Ocean::step(double t) {
 	heightMap.clear();
 	for (int row = 0; row < height; ++row) {
 		for (int col = 0; col < width; ++col) {
-			heightMap.push_back(perlin.normalizedOctave3D(row * resolution / scale, col * resolution / scale, t/10.0, 10, 0.5));
+			heightMap.push_back(perlin.normalizedOctave3D(row * resolution / scale, col * resolution / scale, t/20.0, 10, 0.5));
 		}
 	}
 
@@ -220,8 +220,8 @@ float Ocean::getHeight(double x, double z) {
 
 	row = max(0, min(height - 1, row));
 	col = max(0, min(width - 1, col));
-
-	return(heightMap.at(row * width + col));
+	//world = this->heightMul* heightMap.at(k) - centerOffset[1]
+	return(this->heightMul * heightMap.at(row * width + col) - centerOffset[1]);
 }
 
 void Ocean::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p) const

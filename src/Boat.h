@@ -6,6 +6,8 @@
 #include <string>
 #include <Eigen/Dense>
 
+#include <glm/glm.hpp>
+
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <vector>
@@ -24,11 +26,13 @@ public:
 	Boat(std::string meshName, Eigen::Vector3d startPos);
 	virtual ~Boat();
 	void init();
+	const glm::mat4x4 getRotationMatrix();
 	void step(double dt, std::shared_ptr<Ocean> ocean);
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> p, const std::shared_ptr<Program> progSimple) const;
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> p, const std::shared_ptr<Program> progSimple);
 	void generate_fp(float length, float radius, float lengthwise_points, float horizontal_points);
 
 	Eigen::Vector3d position;
+	Eigen::Vector3d rotation;
 	Eigen::Vector3d velocity;
 	Eigen::Vector3d angular_velocity;
 
